@@ -37,7 +37,7 @@ void pm_download_page (unsigned int page_number, unsigned int frame_number)
   }
 
   rewind(pm_backing_store);
-  fprintf (pm_log, "%s[%c]@%05d: p=%d, f=%d\n", "DOWNLOADED", page_number, frame_number);
+  fprintf (pm_log, "%s: p=%d, f=%d\n", "DOWNLOADED", page_number, frame_number);
 }
 
 // Sauvegarde la frame spécifiée dans la page du backing store
@@ -54,7 +54,7 @@ void pm_backup_page (unsigned int frame_number, unsigned int page_number)
   }
 
   rewind(pm_backing_store);
-  fprintf (pm_log, "%s[%c]@%05d: p=%d, f=%d\n", "BACKED-UP", page_number, frame_number);
+  fprintf (pm_log, "%s: p=%d, f=%d\n", "BACKED-UP", page_number, frame_number);
 }
 
 char pm_read (unsigned int physical_address)
@@ -68,7 +68,7 @@ char pm_read (unsigned int physical_address)
   int frame_number = physical_address >> 8;
   int offset = physical_address - (frame_number << 8);
 
-  fprintf (pm_log, "%s[%c]@%05d: pa=%d, f=%d, o=%d\n", "READING", physical_address, frame_number, offset);
+  fprintf (pm_log, "%s[%c]@%05d: f=%d, o=%d\n", "READING", c, physical_address, frame_number, offset);
   return pm_memory[frame_number * 256 + offset];
 }
 
@@ -83,7 +83,7 @@ void pm_write (unsigned int physical_address, char c)
   int frame_number = physical_address >> 8;
   int offset = physical_address - (frame_number << 8);
 
-  fprintf (pm_log, "%s[%c]@%05d: pa=%d, f=%d, o=%d\n", "READING", physical_address, frame_number, offset);
+  fprintf (pm_log, "%s[%c]@%05d: f=%d, o=%d\n", "READING", c, physical_address, frame_number, offset);
   pm_memory[frame_number * 256 + offset] = c;
 }
 
