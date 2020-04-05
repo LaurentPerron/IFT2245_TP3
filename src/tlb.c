@@ -34,7 +34,26 @@ void tlb_init (FILE *log)
  * Renvoie le `frame_number`, si trouvé, ou un nombre négatif sinon.  */
 static int tlb__lookup (unsigned int page_number, bool write)
 {
-  // TODO: COMPLÉTER CETTE FONCTION.
+  for (int i=0; i<TLB_NUM_ENTRIES; i++) {
+      unsigned int current_page_number = tlb_entries[i].page_number;
+      int current_frame_number = tlb_entries[i].frame_number;
+
+      /*
+       * si on trouve la bonne page, on la met en première position
+       * du TLB pour l'algorithme LRU.
+       */
+      if (current_page_number == page_number) {
+          //on enregistre la page
+          struct tlb_entry page_looked_up = tlb_entries[i];
+          //on décale toutes les pages précédentes à droite
+          for (int j=i; j>0; j--) tlb_entries[j] = tlb_entries[j-1];
+          //on place la page recherchée en première position
+          tlb_entries[0] = page_looked_up;
+
+          return page_looked_up.frame_number;
+      }
+  }
+  //si on n'a pas trouvé la page
   return -1;
 }
 
@@ -43,7 +62,15 @@ static int tlb__lookup (unsigned int page_number, bool write)
 static void tlb__add_entry (unsigned int page_number,
                             unsigned int frame_number, bool readonly)
 {
-  // TODO: COMPLÉTER CETTE FONCTION.
+  //on remplace la page en dernière position du TLB car c'est la moins utilisée.
+  tlb_entries[TLB_NUM_ENTRIES-1].page_number  = page_number;
+  tlb_entries[TLB_NUM_ENTRIES-1].frame_number = frame_number;
+  tlb_entries[TLB_NUM_ENTRIES-1].readonly     = readonly;
+
+  //on place la nouvelle page en première position
+  struct tlb_entry new_page = tlb_entries[TLB_NUM_ENTRIES-1];
+  for (int i=TLB_NUM_ENTRIES-1; i>0; i--) tlb_entries[i] = tlb_entries[i-1];
+  tlb_entries[0] = new_page;
 }
 
 /******************** ¡ NE RIEN CHANGER CI-DESSOUS !  ******************/
