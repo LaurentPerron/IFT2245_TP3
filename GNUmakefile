@@ -18,7 +18,7 @@ OBJS = tlb.o parse.tab.o vmm.o pm.o pt.o tokens.o common.o
 
 default: all
 
-all: $(BUILD_DIR)/vmm rapport.pdf
+all: $(BUILD_DIR)/vmm
 
 $(BUILD_DIR)/vmm: $(patsubst %.o, $(BUILD_DIR)/%.o, $(OBJS))
 	$(CC) $(LDFLAGS) -o $@ $(patsubst %.o,$(BUILD_DIR)/%.o, $(OBJS))
@@ -40,9 +40,6 @@ run: all
 
 clean:
 	$(RM) -r $(BUILD_DIR) *.aux *.log
-
-%.pdf: %.tex
-	pdflatex $<
 
 release:
 	$(TAR) -czv -f tp3.tar.gz --transform 's|^|tp3/|' \

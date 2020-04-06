@@ -7,6 +7,7 @@
 /* Initialise la mémoire physique.  */
 void pm_init (FILE *backing_store, FILE *log);
 
+int get_download_count();
 void pm_download_page (unsigned int page_number, unsigned int frame_number);
 void pm_backup_page (unsigned int frame_number, unsigned int page_number);
 char pm_read (unsigned int physical_address);

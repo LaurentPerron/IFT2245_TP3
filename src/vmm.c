@@ -48,24 +48,25 @@ char vmm_read (unsigned int laddress)
   int offset = laddress - (page_number << 8);
 
   // On cherche dans le tlb
-  if(frame_number = tld_lookup(page_number, 0) > -1) {
+  frame_number = tlb_lookup(page_number, 0);
+  if(frame_number > -1) {
 
     paddress = (frame_number << 8) + offset;
     c = pm_read(paddress);
 
   } else { // Si on a un miss on regarde dans le page_table
-
-    if(frame_number = pt_lookup(page_number, 0) > -1) {
+    frame_number = pt_lookup(page_number);
+    if(frame_number > -1) {
 
       paddress = (frame_number << 8) + offset;
       c = pm_read(paddress);
     } else { // Si on a encore un miss, on va chercher directement dans le BACKING_STORE
 
       // Trouver un frame libre
-      frame_number = download_count % 32;
+      frame_number = get_download_count() % 32;
 
-      pm_download(page_number, frame_number);
-      pt_set_entry(page_number, frame_number, 1);
+      pm_download_page(page_number, frame_number);
+      pt_set_entry(page_number, frame_number);
       tlb_add_entry(page_number, frame_number, 1);
 
       paddress = (frame_number << 8) + offset;
@@ -87,24 +88,25 @@ void vmm_write (unsigned int laddress, char c)
   int offset = laddress - (page_number << 8);
 
   // On cherche dans le tlb
-  if(frame_number = tld_lookup(page_number, 1) > -1) {
+  frame_number = tlb_lookup(page_number, 1);
+  if(frame_number > -1) {
 
     paddress = (frame_number << 8) + offset;
     pm_write(paddress, c);
 
   } else { // Si on a un miss on regarde dans le page_table
-
-    if(frame_number = pt_lookup(page_number, 1) > -1) {
+    frame_number = pt_lookup(page_number);
+    if(frame_number > -1) {
 
       paddress = (frame_number << 8) + offset;
       pm_write(paddress, c);
     } else { // Si on a encore un miss, on va chercher directement dans le BACKING_STORE
 
       // Trouver un frame libre
-      frame_number = download_count % 32;
+      frame_number = get_download_count() % 32;
 
-      pm_download(page_number, frame_number);
-      pt_set_entry(page_number, frame_number, 0);
+      pm_download_page(page_number, frame_number);
+      pt_set_entry(page_number, frame_number);
       tlb_add_entry(page_number, frame_number, 0);
 
       paddress = (frame_number << 8) + offset;

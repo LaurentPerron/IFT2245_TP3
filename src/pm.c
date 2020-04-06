@@ -14,6 +14,10 @@ static unsigned int backup_count = 0;
 static unsigned int read_count = 0;
 static unsigned int write_count = 0;
 
+int get_download_count() {
+  return download_count;
+}
+
 // Initialise la mémoire physique
 void pm_init (FILE *backing_store, FILE *log)
 {
@@ -59,6 +63,7 @@ void pm_backup_page (unsigned int frame_number, unsigned int page_number)
 
 char pm_read (unsigned int physical_address)
 {
+  char c;
   read_count++;
   /* physical address de la forme :
      XXXXX | XXXXXXXX
@@ -68,8 +73,10 @@ char pm_read (unsigned int physical_address)
   int frame_number = physical_address >> 8;
   int offset = physical_address - (frame_number << 8);
 
+  c = pm_memory[frame_number * 256 + offset];
+
   fprintf (pm_log, "%s[%c]@%05d: f=%d, o=%d\n", "READING", c, physical_address, frame_number, offset);
-  return pm_memory[frame_number * 256 + offset];
+  return c;
 }
 
 void pm_write (unsigned int physical_address, char c)
