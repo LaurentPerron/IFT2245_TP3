@@ -39,6 +39,7 @@ static void vmm_log_command (FILE *out, const char *command,
 /* Effectue une lecture à l'adresse logique `laddress`.  */
 char vmm_read (unsigned int laddress)
 {
+  printf("Read at address %d\n", laddress);
   int frame_number;
   int paddress;
   char c = '!';
@@ -46,10 +47,12 @@ char vmm_read (unsigned int laddress)
 
   int page_number = laddress >> 8;
   int offset = laddress - (page_number << 8);
+  printf("Page number : %d, Offset : %d\n", page_number, offset);
 
   // On cherche dans le tlb
   frame_number = tlb_lookup(page_number, 0);
   if(frame_number > -1) {
+    printf("Page number %d in tlb\n", page_number);
 
     paddress = (frame_number << 8) + offset;
     c = pm_read(paddress);
@@ -57,15 +60,25 @@ char vmm_read (unsigned int laddress)
   } else { // Si on a un miss on regarde dans le page_table
     frame_number = pt_lookup(page_number);
     if(frame_number > -1) {
-
+      printf("Page number %d in Page table\n", page_number);
       paddress = (frame_number << 8) + offset;
       c = pm_read(paddress);
     } else { // Si on a encore un miss, on va chercher directement dans le BACKING_STORE
 
+      printf("Page number %d not in Page table ar tlb\n", page_number);
       // Trouver un frame libre
-      frame_number = get_download_count() % 32;
+      frame_number = get_download_count();
+      if(frame_number > 31) {
+        frame_number = frame_number % 32;
+        // TODO
+        // Besoin de backup la frame en question.
+        // Comment retrouver la bonne page ?
+        // pm_backup_page(frame_number, );
+      }
+      printf("Frame %d to be initialized in pm\n", frame_number);
 
       pm_download_page(page_number, frame_number);
+      printf("Page downloaded to pm\n");
       pt_set_entry(page_number, frame_number);
       tlb_add_entry(page_number, frame_number, 1);
 
@@ -80,16 +93,19 @@ char vmm_read (unsigned int laddress)
 /* Effectue une écriture à l'adresse logique `laddress`.  */
 void vmm_write (unsigned int laddress, char c)
 {
+  printf("Write at address %d\n", laddress);
   write_count++;
   int frame_number;
   int paddress;
 
   int page_number = laddress >> 8;
   int offset = laddress - (page_number << 8);
+  printf("Page number : %d, Offset : %d\n", page_number, offset);
 
   // On cherche dans le tlb
   frame_number = tlb_lookup(page_number, 1);
   if(frame_number > -1) {
+    printf("Page number %d in tlb\n", page_number);
 
     paddress = (frame_number << 8) + offset;
     pm_write(paddress, c);
@@ -97,15 +113,27 @@ void vmm_write (unsigned int laddress, char c)
   } else { // Si on a un miss on regarde dans le page_table
     frame_number = pt_lookup(page_number);
     if(frame_number > -1) {
+      printf("Page number %d in Page table\n", page_number);
 
       paddress = (frame_number << 8) + offset;
       pm_write(paddress, c);
     } else { // Si on a encore un miss, on va chercher directement dans le BACKING_STORE
 
+      printf("Page number %d not in Page table or tlb\n", page_number);
       // Trouver un frame libre
-      frame_number = get_download_count() % 32;
+      frame_number = get_download_count();
 
+      if(frame_number > 31) {
+        frame_number = frame_number % 32;
+        // TODO
+        // Besoin de backup la frame en question.
+        // Comment retrouver la bonne page ?
+        // pm_backup_page(frame_number, );
+      }
+
+      printf("Frame %d to be initialized in pm\n", frame_number);
       pm_download_page(page_number, frame_number);
+      printf("Page downloaded to pm\n");
       pt_set_entry(page_number, frame_number);
       tlb_add_entry(page_number, frame_number, 0);
 

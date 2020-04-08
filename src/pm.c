@@ -29,6 +29,9 @@ void pm_init (FILE *backing_store, FILE *log)
 // Charge la page demandée du backing store
 void pm_download_page (unsigned int page_number, unsigned int frame_number)
 {
+  if(pm_backing_store == NULL) {
+    printf("backing store not initialized\n");
+  }
   download_count++;
 
   int begin = 256 * frame_number;
@@ -41,6 +44,11 @@ void pm_download_page (unsigned int page_number, unsigned int frame_number)
   }
 
   rewind(pm_backing_store);
+
+  if(pm_log == NULL) {
+    printf("PM Log not initialized\n");
+    return;
+  }
   fprintf (pm_log, "%s: p=%d, f=%d\n", "DOWNLOADED", page_number, frame_number);
 }
 
@@ -58,6 +66,11 @@ void pm_backup_page (unsigned int frame_number, unsigned int page_number)
   }
 
   rewind(pm_backing_store);
+
+  if(pm_log == NULL) {
+    printf("PM Log not initialized\n");
+    return;
+  }
   fprintf (pm_log, "%s: p=%d, f=%d\n", "BACKED-UP", page_number, frame_number);
 }
 
@@ -74,7 +87,10 @@ char pm_read (unsigned int physical_address)
   int offset = physical_address - (frame_number << 8);
 
   c = pm_memory[frame_number * 256 + offset];
-
+  if(pm_log == NULL) {
+    printf("PM Log not initialized\n");
+    return c;
+  }
   fprintf (pm_log, "%s[%c]@%05d: f=%d, o=%d\n", "READING", c, physical_address, frame_number, offset);
   return c;
 }
@@ -90,6 +106,10 @@ void pm_write (unsigned int physical_address, char c)
   int frame_number = physical_address >> 8;
   int offset = physical_address - (frame_number << 8);
 
+  if(pm_log == NULL) {
+    printf("PM Log not initialized\n");
+    return;
+  }
   fprintf (pm_log, "%s[%c]@%05d: f=%d, o=%d\n", "READING", c, physical_address, frame_number, offset);
   pm_memory[frame_number * 256 + offset] = c;
 }
