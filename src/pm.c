@@ -106,12 +106,13 @@ void pm_write (unsigned int physical_address, char c)
   int frame_number = physical_address >> 8;
   int offset = physical_address - (frame_number << 8);
 
+  pm_memory[frame_number * 256 + offset] = c;
+
   if(pm_log == NULL) {
     printf("PM Log not initialized\n");
     return;
   }
   fprintf (pm_log, "%s[%c]@%05d: f=%d, o=%d\n", "READING", c, physical_address, frame_number, offset);
-  pm_memory[frame_number * 256 + offset] = c;
 }
 
 
