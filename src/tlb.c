@@ -50,6 +50,7 @@ static int tlb__lookup (unsigned int page_number, bool write)
           //on place la page recherchée en première position
           tlb_entries[0] = page_looked_up;
 
+          if(write == 1) page_looked_up.readonly = 0;
           return page_looked_up.frame_number;
       }
   }
