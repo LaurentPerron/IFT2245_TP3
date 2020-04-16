@@ -23,10 +23,18 @@ void vmm_init (FILE *log)
   vmm_log = log;
 }
 
+void print_stack() {
+  printf("[ ");
+  for(int i = 0; i < 31; i++) {
+    printf("%d, ", lru_stack[i]);
+  }
+  printf("%d ]\n", lru_stack[31]);
+}
+
 int push(int page) {
   int temp1 = lru_stack[0];
   int temp2;
-  for(int i = 0; i+1 < stack_top; i++) {
+  for(int i = 0; i+1 <= stack_top; i++) {
     if(temp1 == page) break;
     temp2 = lru_stack[i+1];
     lru_stack[i+1] = temp1;
@@ -55,7 +63,6 @@ static void vmm_log_command (FILE *out, const char *command,
 /* Effectue une lecture à l'adresse logique `laddress`.  */
 char vmm_read (unsigned int laddress)
 {
-  printf("Read at address %d\n", laddress);
   int frame_number;
   int paddress;
   char c = '!';
@@ -63,7 +70,6 @@ char vmm_read (unsigned int laddress)
 
   int page_number = laddress >> 8;
   int offset = laddress - (page_number << 8);
-  printf("Page number : %d, Offset : %d\n", page_number, offset);
 
   // On cherche dans le tlb
   frame_number = tlb_lookup(page_number, 1);
@@ -80,6 +86,7 @@ char vmm_read (unsigned int laddress)
     if(frame_number > -1) {
 
       printf("Page number %d in Page table\n", page_number);
+      tlb_add_entry(page_number, frame_number, pt_readonly_p(page_number));
       paddress = (frame_number << 8) + offset;
       c = pm_read(paddress);
       push(page_number);
@@ -89,11 +96,11 @@ char vmm_read (unsigned int laddress)
       printf("Page number %d not in Page table or tlb\n", page_number);
       // Trouver un frame libre
       frame_number = get_download_count();
-      if(stack_top < 31) stack_top++;
 
       if(frame_number > 31) { // On se sert alors de l'algo de remplacement de page
 
         int page_to_sack = lru_stack[stack_top];
+        printf("Page number %d to be sacked\n", page_to_sack);
         frame_number = pt_lookup(page_to_sack);
 
         if(!pt_readonly_p(page_to_sack))
@@ -101,18 +108,18 @@ char vmm_read (unsigned int laddress)
 
         pt_unset_entry(page_to_sack);
       }
-      printf("Frame %d to be initialized in pm\n", frame_number);
 
       pm_download_page(page_number, frame_number);
-      printf("Page downloaded to pm\n");
       pt_set_entry(page_number, frame_number);
       tlb_add_entry(page_number, frame_number, 1);
 
       paddress = (frame_number << 8) + offset;
       c = pm_read(paddress);
+      if(stack_top < 31) stack_top++;
       push(page_number);
     }
   }
+  print_stack();
   vmm_log_command (stdout, "READING", laddress, page_number, frame_number, offset, paddress, c);
   return c;
 }
@@ -120,14 +127,12 @@ char vmm_read (unsigned int laddress)
 /* Effectue une écriture à l'adresse logique `laddress`.  */
 void vmm_write (unsigned int laddress, char c)
 {
-  printf("Write at address %d\n", laddress);
   write_count++;
   int frame_number;
   int paddress;
 
   int page_number = laddress >> 8;
   int offset = laddress - (page_number << 8);
-  printf("Page number : %d, Offset : %d\n", page_number, offset);
 
   // On cherche dans le tlb
   frame_number = tlb_lookup(page_number, 0);
@@ -145,6 +150,7 @@ void vmm_write (unsigned int laddress, char c)
 
       printf("Page number %d in Page table\n", page_number);
       pt_set_readonly(page_number, 0);
+      tlb_add_entry(page_number, frame_number, 0);
       paddress = (frame_number << 8) + offset;
       pm_write(paddress, c);
       push(page_number);
@@ -154,10 +160,11 @@ void vmm_write (unsigned int laddress, char c)
       printf("Page number %d not in Page table or tlb\n", page_number);
       // Trouver un frame libre
       frame_number = get_download_count();
-      if(stack_top < 31) stack_top++;
 
       if(frame_number > 31) {
+
         int page_to_sack = lru_stack[stack_top];
+        printf("Page number %d to be sacked\n", page_to_sack);
         frame_number = pt_lookup(page_to_sack);
 
         if(!pt_readonly_p(page_to_sack))
@@ -167,18 +174,18 @@ void vmm_write (unsigned int laddress, char c)
 
       }
 
-      printf("Frame %d to be initialized in pm\n", frame_number);
       pm_download_page(page_number, frame_number);
-      printf("Page downloaded to pm\n");
       pt_set_entry(page_number, frame_number);
       pt_set_readonly(page_number, 0);
       tlb_add_entry(page_number, frame_number, 0);
 
       paddress = (frame_number << 8) + offset;
       pm_write(paddress, c);
+      if(stack_top < 31) stack_top++;
       push(page_number);
     }
   }
+  print_stack();
   vmm_log_command (stdout, "WRITING", laddress, page_number, frame_number, offset, paddress, c);
 }
 
