@@ -1,3 +1,8 @@
+/**
+ * William Bach 20130259
+ * Laurent Perron 1052137
+ */
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>

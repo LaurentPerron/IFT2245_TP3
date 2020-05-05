@@ -1,3 +1,9 @@
+/**
+ * William Bach 20130259
+ * Laurent Perron 1052137
+ */
+
+
 #ifndef CONF_H
 #define CONF_H
 
