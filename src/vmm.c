@@ -81,8 +81,6 @@ char vmm_read (unsigned int laddress)
   frame_number = tlb_lookup(page_number, 1);
   if(frame_number > -1) {
 
-    printf("Page number %d in tlb\n", page_number);
-
     paddress = (frame_number << 8) + offset;
     c = pm_read(paddress);
     push(page_number);
@@ -91,7 +89,6 @@ char vmm_read (unsigned int laddress)
     frame_number = pt_lookup(page_number);
     if(frame_number > -1) {
 
-      printf("Page number %d in Page table\n", page_number);
       tlb_add_entry(page_number, frame_number, pt_readonly_p(page_number));
       paddress = (frame_number << 8) + offset;
       c = pm_read(paddress);
@@ -99,14 +96,12 @@ char vmm_read (unsigned int laddress)
 
     } else { // Si on a encore un miss, on va chercher directement dans le BACKING_STORE
 
-      printf("Page number %d not in Page table or tlb\n", page_number);
       // Trouver un frame libre
       frame_number = get_download_count();
 
       if(frame_number > 31) { // On se sert alors de l'algo de remplacement de page
 
         int page_to_sack = lru_stack[stack_top];
-        printf("Page number %d to be sacked\n", page_to_sack);
         frame_number = pt_lookup(page_to_sack);
 
         if(!pt_readonly_p(page_to_sack))
@@ -125,7 +120,6 @@ char vmm_read (unsigned int laddress)
       push(page_number);
     }
   }
-  print_stack();
   vmm_log_command (stdout, "READING", laddress, page_number, frame_number, offset, paddress, c);
   return c;
 }
@@ -143,7 +137,6 @@ void vmm_write (unsigned int laddress, char c)
   // On cherche dans le tlb
   frame_number = tlb_lookup(page_number, 0);
   if(frame_number > -1) {
-    printf("Page number %d in tlb\n", page_number);
 
     paddress = (frame_number << 8) + offset;
     pm_write(paddress, c);
@@ -154,7 +147,6 @@ void vmm_write (unsigned int laddress, char c)
     frame_number = pt_lookup(page_number);
     if(frame_number > -1) {
 
-      printf("Page number %d in Page table\n", page_number);
       pt_set_readonly(page_number, 0);
       tlb_add_entry(page_number, frame_number, 0);
       paddress = (frame_number << 8) + offset;
@@ -163,14 +155,12 @@ void vmm_write (unsigned int laddress, char c)
 
     } else { // Si on a encore un miss, on va chercher directement dans le BACKING_STORE
 
-      printf("Page number %d not in Page table or tlb\n", page_number);
       // Trouver un frame libre
       frame_number = get_download_count();
 
       if(frame_number > 31) {
 
         int page_to_sack = lru_stack[stack_top];
-        printf("Page number %d to be sacked\n", page_to_sack);
         frame_number = pt_lookup(page_to_sack);
 
         if(!pt_readonly_p(page_to_sack))
@@ -191,7 +181,6 @@ void vmm_write (unsigned int laddress, char c)
       push(page_number);
     }
   }
-  print_stack();
   vmm_log_command (stdout, "WRITING", laddress, page_number, frame_number, offset, paddress, c);
 }
 

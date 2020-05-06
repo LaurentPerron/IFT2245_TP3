@@ -36,7 +36,9 @@ $(BUILD_DIR)/tokens.c: src/tokens.l
 	$(FLEX) -o $@ $<
 
 run: all
+	$(BUILD_DIR)/vmm tests/BACKING_STORE.txt <tests/command.in
 	$(BUILD_DIR)/vmm tests/BACKING_STORE.txt <tests/command1.in
+	$(BUILD_DIR)/vmm tests/BACKING_STORE.txt <tests/command2.in
 
 clean:
 	$(RM) -r $(BUILD_DIR) *.aux *.log
